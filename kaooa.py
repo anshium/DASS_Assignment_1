@@ -1,8 +1,5 @@
 
 
-from ast import Num
-import platform
-import select
 from ursina import *
 from ursina import texture
 import time
@@ -66,6 +63,19 @@ adjacent_positions = {
         9:  [1, 2, 5, 8]
 }
 
+two_jump_moves = {
+        0:  [6, 9],
+        1:  [7, 5],
+        2:  [8, 6],
+        3:  [7, 9],
+        4:  [5, 8],
+        5:  [1, 4],
+        6:  [0, 2],
+        7:  [1, 3],
+        8:  [2, 4],
+        9:  [0, 3]
+}
+
 occupied = dict()
 for i in range(0, 10):
     occupied[i] = 0
@@ -107,14 +117,28 @@ class Vulture:
                 
                 return 0
         return 1
-    def highlightAdjacent(self):
+    def highlightAdjacent(self)->list:
+        possibilities = []
+        for i in range(0, 10):
+            platforms[i].color = color.red
         for i in range(0, 10):
             if(i in adjacent_positions[self.index]):
-                platforms[i].color = color.green
-            else:
-                platforms[i].color = color.red
+                if(i == 8):
+                    print("heya")
+                if(occupied[i]):
+                    print("Here")
+                    for j in adjacent_positions[i]:
+                        if(j == 9):
+                            print("Hola")
+                        if j in two_jump_moves[self.index]:
+                            platforms[i].color = color.red
+                            platforms[j].color = color.green
+                            possibilities.append(j)
+                else:
+                    platforms[i].color = color.green
+                    possibilities.append(i)
+        return possibilities
           
-    
     # Tries to jump over some crow in any of the blocks adjacent to it. If it fails, it returns 1, otherwise returns 0 
     # Assuming only one vulture, rest all crows. This code will break if that is not the case. However, we can change occupied    
     def moveToBlockOverCrow(self, block_index:int) -> bool:
@@ -176,76 +200,105 @@ def incrementMove():
     global move
     move+=1
 
+def changeTurnText(turn, textBox:Entity):
+    if turn == 0:
+        textBox.text = 'Turn: Vulture'
+    elif turn == 1:
+        textBox.text = 'Turn: Crow'
 
-text_box = Text(text = '')
+
+text_box = Text(text = 'Turn: Vulture')
 text_box.origin = (0, 15)
 
 abc = 1
 
 newVulture = Vulture(0)
 newVulture.entity.color = color.green
-newVulture.highlightAdjacent()
 
 newCrow = Crow(1, 8)
+possibilities = newVulture.highlightAdjacent()
 
-def highlight_particular(vulture:Vulture):
+def clear_highlighting():
     global platforms
     i = 0
-    platforms[adjacent_positions[vulture.index][0]].color = color.yellow
-    
-    if held_keys['left mouse']:
-        i += 1
-        platforms[adjacent_positions[vulture.index][i]].color = color.yellow
+    for i in range(10):
+        platforms[i].color = color.white
 
 i = 0
 xyz = 0
 selected_index = 0
+turn = 0        # 0: Vulture, 1: Crows
+allowed_to_change_turns = 0
+
 def update():
+    global turn
     global move
     global abc
     global platforms
     global i
     global xyz
     global selected_index
-    if held_keys['m']:
-        '''if(move == 1):
-            val = newVulture.moveToBlockOverCrow(9)
-            newVulture.highlightAdjacent()
-            print(val)
-        elif(move == 2):
-            val = newVulture.moveToBlockNoCrow(2)
-            newVulture.highlightAdjacent()
-            print(val)
-        elif(move == 3):
-            val = newVulture.moveToBlockNoCrow(5) 
-            newVulture.highlightAdjacent()
-            highlight_particular(newVulture)
-            print(val)'''
-        if(abc == 1):
-            platforms[selected_index].color = color.white
-            print(newVulture.moveToBlockNoCrow(selected_index))
+    global allowed_to_change_turns
+    global text_box
+    global possibilities
+    if(turn == 0):
+        if held_keys['m']:
+            '''if(move == 1):
+                val = newVulture.moveToBlockOverCrow(9)
+                newVulture.highlightAdjacent()
+                print(val)
+            elif(move == 2):
+                val = newVulture.moveToBlockNoCrow(2)
+                newVulture.highlightAdjacent()
+                print(val)
+            elif(move == 3):
+                val = newVulture.moveToBlockNoCrow(5) 
+                newVulture.highlightAdjacent()
+                highlight_particular(newVulture)
+                print(val)'''
+            if(abc == 1):
+                platforms[selected_index].color = color.white
+
+                for i in adjacent_positions[newVulture.index]:
+                    if(occupied[i]):
+                        for j in adjacent_positions[i]:
+                            if j in two_jump_moves[newVulture.index]:
+                                newVulture.moveToBlockOverCrow(j)
+                newVulture.moveToBlockNoCrow(selected_index)
         
-            newVulture.highlightAdjacent()    
-            move+=1
-            abc = 0
-            newVulture.entity.color = color.yellow
+                possibilities = newVulture.highlightAdjacent()    
+                move+=1
+                abc = 0
+                newVulture.entity.color = color.yellow
     
-    if held_keys['k']:
-        newVulture.entity.color = color.green
-        abc = 1
+        if held_keys['k']:    
+            newVulture.entity.color = color.green
+            abc = 1
 
 
-    if held_keys['left mouse']:
-        if(xyz == 0):
-            platforms[adjacent_positions[newVulture.index][i % len(adjacent_positions[newVulture.index])]].color = color.green
-            i += 1
-            xyz = 1
-            platforms[adjacent_positions[newVulture.index][i % len(adjacent_positions[newVulture.index])]].color = color.yellow
-            selected_index = adjacent_positions[newVulture.index][i % len(adjacent_positions[newVulture.index])]
-            print(selected_index)
+        if held_keys['left mouse']:
+            if(xyz == 0):
+                platforms[possibilities[i % len(possibilities)]].color = color.green
+                i += 1
+                xyz = 1
+                platforms[possibilities[i % len(possibilities)]].color = color.yellow
+                selected_index = possibilities[i % len(possibilities)]
+                print(selected_index)
         
-    if held_keys['right mouse']:
-        xyz = 0
+        if held_keys['right mouse']:
+            xyz = 0
+        
+    if held_keys['u']:
+        if(allowed_to_change_turns == 1):
+            turn = (turn + 1) % 2
+            allowed_to_change_turns = 0
+            changeTurnText(turn, text_box)
+            clear_highlighting()
+            if(turn == 0):
+                newVulture.highlightAdjacent()    
+    if held_keys['t']:
+        allowed_to_change_turns = 1
+     
 Sky(texture = 'stars2')
 '''
 platformOne = Entity(model = 'platform',
