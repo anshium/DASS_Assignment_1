@@ -41,15 +41,15 @@ for i in range(6, 10):
 
     positions.append([X, Y])
 
+platforms = dict()
 for i in range(10):
-    Entity(model = 'platform',
+     platforms[i] = Entity(model = 'platform',
            position = Vec3(positions[i][0], positions[i][1], 0),
            rotation = Vec3(0, 0, 0),
            texture = 'grass',
            scale = 0.1
            )
     
-objects = []
 adjacent_positions = {
         0:  [7, 8],
         1:  [8, 9],
@@ -76,6 +76,7 @@ class Vulture:
     global occupied
     global positions
     global adjacent_positions
+    global platforms
     global crows_and_their_position_indices
     def __init__(self, index):
         self.index = index
@@ -101,6 +102,13 @@ class Vulture:
                 
                 return 0
         return 1
+    def highlightAdjacent(self):
+        for i in range(0, 10):
+            if(i in adjacent_positions[self.index]):
+                platforms[i].color = color.green
+            else:
+                platforms[i].color = color.red
+          
     
     # Tries to jump over some crow in any of the blocks adjacent to it. If it fails, it returns 1, otherwise returns 0 
     # Assuming only one vulture, rest all crows. This code will break if that is not the case. However, we can change occupied    
@@ -164,10 +172,14 @@ def incrementMove():
     move+=1
 
 
+text_box = Text(text = '')
+text_box.origin = (0, 15)
+
 abc = 1
 
 newVulture = Vulture(0)
 newVulture.entity.color = color.green
+newVulture.highlightAdjacent()
 
 newCrow = Crow(1, 8)
 
@@ -177,11 +189,14 @@ def update():
     if held_keys['m']:
         if(move == 1):
             val = newVulture.moveToBlockOverCrow(9)
+            newVulture.highlightAdjacent()
             print(val)
         elif(move == 2):
             val = newCrow.moveToBlock(2)
+            newVulture.highlightAdjacent()
         elif(move == 3):
-            val = newVulture.moveToBlockNoCrow(5)  
+            val = newVulture.moveToBlockNoCrow(5) 
+            newVulture.highlightAdjacent()
         if(abc == 1):
             move+=1
             abc = 0
