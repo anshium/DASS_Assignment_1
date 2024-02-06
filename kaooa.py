@@ -1,5 +1,6 @@
 
 
+from hmac import new
 from ursina import *
 from ursina import texture
 import time
@@ -26,7 +27,7 @@ for i in range(1, 5):
     y = positions[i - 1][1]
         
     X = x * math.cos(ar) + y * math.sin(ar)
-    Y = - x * math.sin(ar) + y * math.cos(ar)    
+    Y = - x * math.sin(ar) + y * math.cos(ar)
 
     positions.append([X, Y])
     
@@ -45,7 +46,7 @@ for i in range(10):
      platforms[i] = Entity(model = 'platform',
            position = Vec3(positions[i][0], positions[i][1], 0),
            rotation = Vec3(0, 0, 0),
-           texture = 'grass',
+           texture = 'texture1',
            scale = 0.1,
            collider='box'
            )
@@ -107,9 +108,7 @@ class Vulture:
     # Moves the vulture to a spot that does not have a crow. 
     def moveToBlockNoCrow(self, block_index:int):
         if block_index in adjacent_positions[self.index]:
-            print("Here1")
             if occupied[block_index] == 0 or 1:
-                print("Here2")
                 occupied[self.index] = 0
                 self.index = block_index
                 self.updatePosition(block_index)
@@ -158,7 +157,6 @@ class Vulture:
                             destroy(value[1])
 
                     return 0
-        
         return 1
 
 class Crow:
@@ -204,7 +202,7 @@ def changeTurnText(turn, textBox:Entity):
     if turn == 0:
         textBox.text = 'Turn: Vulture'
     elif turn == 1:
-        textBox.text = 'Turn: Crow'
+        textBox.text = 'Turn: Crow, Drop phase'
 
 
 text_box = Text(text = 'Turn: Vulture')
@@ -212,10 +210,11 @@ text_box.origin = (0, 15)
 
 abc = 1
 
-newVulture = Vulture(0)
+initial_vulture_index = 0
+
+newVulture = Vulture(initial_vulture_index)
 newVulture.entity.color = color.green
 
-newCrow = Crow(1, 8)
 possibilities = newVulture.highlightAdjacent()
 
 def clear_highlighting():
@@ -230,6 +229,19 @@ selected_index = 0
 turn = 0        # 0: Vulture, 1: Crows
 allowed_to_change_turns = 0
 
+new_crow_position = 0
+
+fgh = 0
+
+p = -1
+
+crow_index = 1
+allowed = 0
+
+phase = 0   # 0: drop phase, 1: move phase
+
+current_moving_crow = 1 # Identified by a 0-indexed number that user crows_and_their_position_indices
+
 def update():
     global turn
     global move
@@ -241,6 +253,14 @@ def update():
     global allowed_to_change_turns
     global text_box
     global possibilities
+    global fgh
+    global p
+    global new_crow_position
+    global crow_index
+    global allowed
+    global crows_and_their_position_indices
+    global phase
+    global current_moving_crow
     if(turn == 0):
         if held_keys['m']:
             '''if(move == 1):
@@ -276,7 +296,7 @@ def update():
             abc = 1
 
 
-        if held_keys['left mouse']:
+        if held_keys['o']:
             if(xyz == 0):
                 platforms[possibilities[i % len(possibilities)]].color = color.green
                 i += 1
@@ -285,9 +305,55 @@ def update():
                 selected_index = possibilities[i % len(possibilities)]
                 print(selected_index)
         
-        if held_keys['right mouse']:
+        if held_keys['p']:
             xyz = 0
+    
+    if(turn == 1):
+        if(phase == 0):
+            if held_keys['o']:
+                if(fgh == 1):
+                    platforms[p % 10].color = color.white
+                    p += 1
+                    print("ye")
+                    while(occupied[p % 10] == 1):
+                        p += 1
+                    platforms[p % 10].color = color.green
+                    new_crow_position = p % 10
+
+                    fgh = 0
+            if held_keys['p']:
+                fgh = 1
         
+            if held_keys['space'] and allowed:
+                if(not occupied[new_crow_position]):
+                    if(crow_index <= 7):
+                        new_crow = Crow(crow_index, new_crow_position)
+                        crow_index += 1
+                        allowed = 0
+                    if(crow_index == 8):
+                        phase = 1
+                        fgh = 0
+                        p = 0
+                        allowed = 0
+            if held_keys['g']:
+                allowed = 1
+        elif(phase == 1):
+            if held_keys['r']:
+                if(fgh == 1): 
+                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.white
+                    p += 1
+                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.salmon
+                    current_moving_crow = p
+                    fgh = 0
+            if held_keys['b']:
+                fgh = 1
+                
+            if held_keys['space'] and allowed:
+               crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.green
+
+            if held_keys['g']:
+                allowed = 1
+
     if held_keys['u']:
         if(allowed_to_change_turns == 1):
             turn = (turn + 1) % 2
@@ -295,11 +361,22 @@ def update():
             changeTurnText(turn, text_box)
             clear_highlighting()
             if(turn == 0):
-                newVulture.highlightAdjacent()    
+                possibilities = newVulture.highlightAdjacent()    
     if held_keys['t']:
         allowed_to_change_turns = 1
      
-Sky(texture = 'stars2')
+    if held_keys['d']:
+        camera.position += Vec3(0.5, 0, 0)
+    if held_keys['a']:
+        camera.position += Vec3(-0.5, 0, 0)
+    if held_keys['w']:
+        camera.rotation += Vec3(0.5, 0, 0)
+    if held_keys['s']:
+        camera.rotation += Vec3(-0.5, 0, 0)
+        
+    if held_keys['l']:
+        print(crows_and_their_position_indices)
+Sky(texture = 'background6')
 '''
 platformOne = Entity(model = 'platform',
                      color = color.rgb(255, 0, 0),
