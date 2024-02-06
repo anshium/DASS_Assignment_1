@@ -1,5 +1,6 @@
 
 
+from ast import Num
 from ursina import *
 from ursina import texture
 import time
@@ -65,11 +66,17 @@ adjacent_positions = {
 occupied = dict()
 for i in range(0, 10):
     occupied[i] = 0
+    
+# This would be of the format {number: [position_index, Entity Object], ...}
+crows_and_their_position_indices = dict()
+for i in range(7):
+    crows_and_their_position_indices[i + 1] = [-1, 0]
 
 class Vulture:
     global occupied
     global positions
     global adjacent_positions
+    global crows_and_their_position_indices
     def __init__(self, index):
         self.index = index
         self.initial_position = Vec3(positions[index][0], positions[index][1], -1)
@@ -107,7 +114,12 @@ class Vulture:
                     self.index = block_index
                     self.updatePosition(block_index)
                     occupied[self.index] = 1
-                
+                    
+                    for key, value in crows_and_their_position_indices.items():
+                        print(key, value)
+                        if(value[0] == i):
+                            destroy(value[1])
+
                     return 0
         
         return 1
@@ -116,7 +128,8 @@ class Crow:
     global occupied
     global positions
     global adjacent_positions
-    def __init__(self, index):
+    global crows_and_their_position_indices
+    def __init__(self, number, index):
         self.index = index
         self.initial_position = Vec3(positions[index][0], positions[index][1], -1)
         self.current_position = self.initial_position
@@ -125,9 +138,12 @@ class Crow:
                rotation = Vec3(0, 0, 0),
                scale = 0.5)
         occupied[self.index] = 1
+        self.number = number
+        crows_and_their_position_indices[self.number] = [index, self.entity]
     def updatePosition(self, index):
         self.position = positions[index]
         self.entity.position = self.position
+        crows_and_their_position_indices[self.number] = [index, self.entity]
 
     # Moves the vulture to a spot that does not have a crow. 
     def moveToBlock(self, block_index:int):
@@ -153,7 +169,7 @@ abc = 1
 newVulture = Vulture(0)
 newVulture.entity.color = color.green
 
-newCrow = Crow(8)
+newCrow = Crow(1, 8)
 
 def update():
     global move
