@@ -8,7 +8,7 @@ class Vulture:
     global positions
     global adjacent_positions
     def __init__(self, position:list):
-        Entity(model = 'vulture_prototype', 
+        self.entity = Entity(model = 'vulture_prototype', 
                position = position,
                rotation = Vec3(0, 0, 0),
                scale = 0.1);
@@ -28,6 +28,7 @@ class Vulture:
            )
     def updatePosition(self, index):
         self.position = positions[index]
+        self.entity.position = self.position;
 
     # Moves the vulture to a spot that does not have a crow. 
     def moveToBlockNoCrow(self, block_index:int):

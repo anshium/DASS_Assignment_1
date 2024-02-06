@@ -2,7 +2,7 @@
 
 from ursina import *
 from ursina import texture
-
+import time
 # import vulture
 
 import PIL
@@ -10,9 +10,6 @@ import PIL
 import math
 
 app = Ursina()
-
-#def update():
-#    platformOne.rotation_y += 50 * time.dt
 
 size = 20
 s = 20
@@ -53,36 +50,37 @@ for i in range(10):
     
 objects = []
 adjacent_positions = {
-        1:  [6, 7],
-        2:  [7, 8],
-        3:  [8, 9],
-        4:  [9, 10],
-        5:  [10, 6],
-        6:  [5, 1, 10, 7],
-        7:  [6, 1, 2, 8],
-        8:  [7, 2, 3, 9],
-        9:  [8, 3, 4, 10],
-        10: [9, 4, 5, 6]
+        0:  [7, 8],
+        1:  [8, 9],
+        2:  [5, 9],
+        3:  [5, 6],
+        4:  [6, 7],
+        5:  [2, 3, 6, 9],
+        6:  [3, 4, 5, 7],
+        7:  [0, 4, 6, 8],
+        8:  [0, 1, 7, 9],
+        9:  [1, 2, 5, 8]
         }
+
+occupied = dict()
+for i in range(0, 10):
+    occupied[i] = 0
 
 class Vulture:
     global occupied
     global positions
     global adjacent_positions
-    def __init__(self, position:list):
-        Entity(model = 'vulture_prototype', 
-               position = position,
+    def __init__(self, index):
+        self.index = index
+        self.initial_position = Vec3(positions[index][0], positions[index][1], -1)
+        self.current_position = self.initial_position
+        self.entity = Entity(model = 'vulture_prototype', 
+               position = self.initial_position,
                rotation = Vec3(0, 0, 0),
-               scale = 0.5);
-        self.initial_position = position
-        self.current_position = position
-        self.index = 1
-        for i in range(len(positions)):
-            if(positions[i][0] == position[0] and positions[i][1] == position[1]):
-                self.index = i + 1
-                break
+               scale = 0.5)
     def updatePosition(self, index):
         self.position = positions[index]
+        self.entity.position = self.position
 
     # Moves the vulture to a spot that does not have a crow. 
     def moveToBlockNoCrow(self, block_index:int):
@@ -99,8 +97,8 @@ class Vulture:
     # Tries to jump over some crow in any of the blocks adjacent to it. If it fails, it returns 1, otherwise returns 0 
     # Assuming only one vulture, rest all crows. This code will break if that is not the case. However, we can change occupied    
     def moveToBlockOverCrow(self, block_index:int) -> bool:
-        for i in adjacent_positions[self.index]:
-            if block_index in adjacent_positions[i]:
+        for i in adjacent_positions[self.index + 1]:
+            if block_index in adjacent_positions[i + 1]:
                 if occupied[block_index] == 0 and occupied[i] == 1:
                     occupied[self.index] = 0
                     occupied[i] = 0             # Use the return statement somehow to remove the crow from the board
@@ -112,7 +110,34 @@ class Vulture:
         
         return 1
 
-newVulture = Vulture(Vec3(positions[0][0], positions[0][1], -2))
+move = 0
+
+def incrementMove():
+    global move
+    move+=1
+
+
+abc = 1
+
+newVulture = Vulture(0)
+newVulture.entity.color = color.green
+
+def update():
+    global move
+    global abc
+    if held_keys['m']:
+        if(move == 1):
+            val = newVulture.moveToBlockNoCrow(8)
+        elif(move == 2):
+            val = newVulture.moveToBlockNoCrow(9)
+        elif(move == 3):
+            val = newVulture.moveToBlockNoCrow(5)  
+        if(abc == 1):
+            move+=1
+            abc = 0
+        
+    if held_keys['k']:
+        abc = 1
 
 Sky(texture = 'stars2')
 '''
