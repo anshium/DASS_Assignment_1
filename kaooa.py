@@ -1,6 +1,8 @@
 
 
 from ast import Num
+import platform
+import select
 from ursina import *
 from ursina import texture
 import time
@@ -47,7 +49,8 @@ for i in range(10):
            position = Vec3(positions[i][0], positions[i][1], 0),
            rotation = Vec3(0, 0, 0),
            texture = 'grass',
-           scale = 0.1
+           scale = 0.1,
+           collider='box'
            )
     
 adjacent_positions = {
@@ -94,7 +97,9 @@ class Vulture:
     # Moves the vulture to a spot that does not have a crow. 
     def moveToBlockNoCrow(self, block_index:int):
         if block_index in adjacent_positions[self.index]:
-            if occupied[block_index] == 0:
+            print("Here1")
+            if occupied[block_index] == 0 or 1:
+                print("Here2")
                 occupied[self.index] = 0
                 self.index = block_index
                 self.updatePosition(block_index)
@@ -183,27 +188,64 @@ newVulture.highlightAdjacent()
 
 newCrow = Crow(1, 8)
 
+def highlight_particular(vulture:Vulture):
+    global platforms
+    i = 0
+    platforms[adjacent_positions[vulture.index][0]].color = color.yellow
+    
+    if held_keys['left mouse']:
+        i += 1
+        platforms[adjacent_positions[vulture.index][i]].color = color.yellow
+
+i = 0
+xyz = 0
+selected_index = 0
 def update():
     global move
     global abc
+    global platforms
+    global i
+    global xyz
+    global selected_index
     if held_keys['m']:
-        if(move == 1):
+        '''if(move == 1):
             val = newVulture.moveToBlockOverCrow(9)
             newVulture.highlightAdjacent()
             print(val)
         elif(move == 2):
-            val = newCrow.moveToBlock(2)
+            val = newVulture.moveToBlockNoCrow(2)
             newVulture.highlightAdjacent()
+            print(val)
         elif(move == 3):
             val = newVulture.moveToBlockNoCrow(5) 
             newVulture.highlightAdjacent()
+            highlight_particular(newVulture)
+            print(val)'''
         if(abc == 1):
+            platforms[selected_index].color = color.white
+            print(newVulture.moveToBlockNoCrow(selected_index))
+        
+            newVulture.highlightAdjacent()    
             move+=1
             abc = 0
-        
+            newVulture.entity.color = color.yellow
+    
     if held_keys['k']:
+        newVulture.entity.color = color.green
         abc = 1
 
+
+    if held_keys['left mouse']:
+        if(xyz == 0):
+            platforms[adjacent_positions[newVulture.index][i % len(adjacent_positions[newVulture.index])]].color = color.green
+            i += 1
+            xyz = 1
+            platforms[adjacent_positions[newVulture.index][i % len(adjacent_positions[newVulture.index])]].color = color.yellow
+            selected_index = adjacent_positions[newVulture.index][i % len(adjacent_positions[newVulture.index])]
+            print(selected_index)
+        
+    if held_keys['right mouse']:
+        xyz = 0
 Sky(texture = 'stars2')
 '''
 platformOne = Entity(model = 'platform',
