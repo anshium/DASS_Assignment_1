@@ -1,6 +1,5 @@
 
 
-from hmac import new
 from ursina import *
 from ursina import texture
 import time
@@ -155,6 +154,7 @@ class Vulture:
                         print(key, value)
                         if(value[0] == i):
                             destroy(value[1])
+                            value[1] = 0
 
                     return 0
         return 1
@@ -179,6 +179,17 @@ class Crow:
         self.position = positions[index]
         self.entity.position = self.position
         crows_and_their_position_indices[self.number] = [index, self.entity]
+
+    def highlightAdjacent(self)->list:
+        possibilities = []
+        for i in range(0, 10):
+            platforms[i].color = color.red
+        for i in range(0, 10):
+            if(i in adjacent_positions[self.index]):
+                if(not occupied[i]):
+                    platforms[i].color = color.green
+                    possibilities.append(i)
+        return possibilities
 
     # Moves the vulture to a spot that does not have a crow. 
     def moveToBlock(self, block_index:int):
@@ -242,6 +253,8 @@ phase = 0   # 0: drop phase, 1: move phase
 
 current_moving_crow = 1 # Identified by a 0-indexed number that user crows_and_their_position_indices
 
+choose_moving_crow = 1
+
 def update():
     global turn
     global move
@@ -261,6 +274,7 @@ def update():
     global crows_and_their_position_indices
     global phase
     global current_moving_crow
+    global choose_moving_crow
     if(turn == 0):
         if held_keys['m']:
             '''if(move == 1):
@@ -338,25 +352,57 @@ def update():
             if held_keys['g']:
                 allowed = 1
         elif(phase == 1):
-            if held_keys['r']:
-                if(fgh == 1): 
-                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.white
-                    p += 1
-                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.salmon
-                    current_moving_crow = p
-                    fgh = 0
-            if held_keys['b']:
-                fgh = 1
+            if(choose_moving_crow):
+                if held_keys['r']:
+                    if(fgh == 1): 
+                        crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.white
+                        p += 1
+                        crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.salmon
+                        current_moving_crow = p
+                        fgh = 0
+                if held_keys['b']:
+                    fgh = 1
                 
-            if held_keys['space'] and allowed:
-               crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.green
+                if held_keys['space'] and allowed:
+                   crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.green
+                   current_moving_crow = p % len(crows_and_their_position_indices) + 1
 
-            if held_keys['g']:
-                allowed = 1
+                if held_keys['g']:
+                    allowed = 1
+            else:
+                if held_keys['m']:
+                    if(abc == 1):
+                        platforms[selected_index].color = color.white
+
+                        for i in adjacent_positions[crows_and_their_position_indices[choose_moving_crow][1].index]:
+                            if(not occupied[i]):
+                                crows_and_their_position_indices[choose_moving_crow][1].moveToBlock(selected_index)
+        
+                        possibilities = crows_and_their_position_indices[choose_moving_crow][1].highlightAdjacent()    
+                        move+=1
+                        abc = 0
+                        crows_and_their_position_indices[choose_moving_crow][1].color = color.yellow
+    
+                if held_keys['k']:    
+                    newVulture.entity.color = color.green
+                    abc = 1
+                    
+                if held_keys['o']:
+                    if(xyz == 0):
+                        platforms[possibilities[i % len(possibilities)]].color = color.green
+                        i += 1
+                        xyz = 1
+                        platforms[possibilities[i % len(possibilities)]].color = color.yellow
+                        selected_index = possibilities[i % len(possibilities)]
+                        print(selected_index)
+        
+                if held_keys['p']:
+                    xyz = 0
 
     if held_keys['u']:
         if(allowed_to_change_turns == 1):
             turn = (turn + 1) % 2
+            choose_moving_crow = 1
             allowed_to_change_turns = 0
             changeTurnText(turn, text_box)
             clear_highlighting()
