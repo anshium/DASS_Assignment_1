@@ -66,5 +66,8 @@ def plot_sequence(sequence:list[list])->int:
 def main():
     sequence = repeat_input()
 
+    X = []
+    Y = []
+
 if __name__ == "__main__":
     main()
