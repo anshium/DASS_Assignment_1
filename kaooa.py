@@ -130,9 +130,14 @@ class Vulture:
                         if(j == 9):
                             print("Hola")
                         if j in two_jump_moves[self.index]:
-                            platforms[i].color = color.red
-                            platforms[j].color = color.green
-                            possibilities.append(j)
+                            # Also check ki j wale occupied to nahi
+                            if(occupied[j] == 0):
+                                platforms[i].color = color.red
+                                platforms[j].color = color.green
+                                possibilities.append(j)
+                            else:
+                                platforms[i].color = color.red
+                                platforms[j].color = color.gray
                 else:
                     platforms[i].color = color.green
                     possibilities.append(i)
@@ -375,13 +380,13 @@ def update():
                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.green
                    current_moving_crow = p % len(crows_and_their_position_indices) + 1
                    choose_moving_crow = 0
+                   possibilities = crows[current_moving_crow - 1].highlightAdjacent()
                 if held_keys['g']:
                     allowed = 1
             else:
                 # print("Here are we")
                 # print(crows_and_their_position_indices)
                 # print(current_moving_crow)
-                possibilities = crows[current_moving_crow - 1].highlightAdjacent()
                 print(possibilities)
                 if(len(possibilities) != 0):
                     if held_keys['m']:
@@ -405,6 +410,8 @@ def update():
                         xyz = 0
                     
                 if held_keys['backspace']:
+                    clear_highlighting()
+                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.salmon
                     choose_moving_crow = 1
 
     if held_keys['u']:
@@ -415,6 +422,8 @@ def update():
             changeTurnText(turn, text_box)
             clear_highlighting()
             selected_index = 0
+            if(crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1] != 0):
+                crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.green
             if(turn == 0):
                 possibilities = newVulture.highlightAdjacent()    
     if held_keys['t']:
