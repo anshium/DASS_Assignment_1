@@ -342,6 +342,7 @@ def update():
                 if(not occupied[new_crow_position]):
                     if(crow_index <= 7):
                         new_crow = Crow(crow_index, new_crow_position)
+                        crows_and_their_position_indices[crow_index].append(new_crow)
                         crow_index += 1
                         allowed = 0
                     if(crow_index == 8):
@@ -366,10 +367,12 @@ def update():
                 if held_keys['space'] and allowed:
                    crows_and_their_position_indices[p % len(crows_and_their_position_indices) + 1][1].color = color.green
                    current_moving_crow = p % len(crows_and_their_position_indices) + 1
-
+                   choose_moving_crow = 0
                 if held_keys['g']:
                     allowed = 1
             else:
+                print("Here are we")
+                crows_and_their_position_indices[current_moving_crow][2].highlightAdjacent()
                 if held_keys['m']:
                     if(abc == 1):
                         platforms[selected_index].color = color.white
@@ -395,9 +398,12 @@ def update():
                         platforms[possibilities[i % len(possibilities)]].color = color.yellow
                         selected_index = possibilities[i % len(possibilities)]
                         print(selected_index)
-        
+                   
                 if held_keys['p']:
                     xyz = 0
+                    
+                if held_keys['backspace']:
+                    choose_moving_crow = 1
 
     if held_keys['u']:
         if(allowed_to_change_turns == 1):
